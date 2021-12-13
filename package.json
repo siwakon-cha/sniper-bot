@@ -1,0 +1,29 @@
+{
+  "name": "bot-snipe",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/hfhunter7/pancakeswap-sniping-bot.git",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "start": "babel-node --presets es2016 bot.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "abi-decoder": "^2.4.0",
+    "axios": "^0.21.1",
+    "big-number": "^2.0.0",
+    "colors": "^1.4.0",
+    "ethereumjs-tx": "^2.1.2",
+    "web3": "^1.3.4"
+  },
+  "devDependencies": {
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-es2016": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "chalk": "^4.1.2",
+    "ethers": "^5.4.6",
+    "express": "^4.17.1"
+  }
+}
