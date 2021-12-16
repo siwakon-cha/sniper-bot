@@ -236,8 +236,8 @@ const ONE_GWEI = 1e9;
 const bscTestnetUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545'
 let web3 = new Web3(new Web3.providers.HttpProvider(bscTestnetUrl));
 const data = {
-  WBNB: '0xCe420292B9Db4f6a7e46D2144A81B332F9B0D8BC', //wbnb
-  to_PURCHASE: '0xC9a51cC8C2Ec9bCBFDCce2F3938A13Cc2E4EBfa8',  // token to purchase = BUSD for test
+  WBNB: '0xC9a51cC8C2Ec9bCBFDCce2F3938A13Cc2E4EBfa8', //wbnb
+  to_PURCHASE: '0xA73e995F9a51B0C91BAD64fe775FdAC5FcAa272D',  // token to purchase = BUSD for test
   factory: '0x4fcEd72290D3337b20F214b2De6dd4974bB75Af2',  //PancakeSwap V2 factory
   router: '0xcd147E2C00f7262067145CF196d39545aed4015E', //PancakeSwap V2 router
   recipient: '0x7Fe1f50050934C11FC7ffaF4AcdB6BAf27daBF45', //wallet address,
@@ -290,6 +290,7 @@ async function sniper(){
 
   const user_wallet = web3.eth.accounts.privateKeyToAccount(privatekey);
   var max_allowance = '10000000000000000000000000';
+  console.log('allowanceTokenA',allowanceTokenA)
   if(Number(allowanceTokenA) === 0.0){
     var approveTX ={
       from: user_wallet.address,
@@ -304,7 +305,7 @@ async function sniper(){
     console.log('result',result)
     console.log('Approved Token A')
   }
-
+  console.log('allowanceTokenB',allowanceTokenB)
   if(Number(allowanceTokenB) === 0.0){
     var approveTX ={
       from: user_wallet.address,
@@ -321,12 +322,13 @@ async function sniper(){
   }
 
   const pair = await new ethers.Contract(pairAddress, ['event Mint(address indexed sender, uint amount0, uint amount1)'], account);
-  pair.on('Mint', async (sender, amount0, amount1) => {
-    if(initialLiquidityDetected === true) {
-      return;
-    }
 
-    initialLiquidityDetected = true;
+  pair.on('Mint', async (sender, amount0, amount1) => {
+    // if(initialLiquidityDetected === true) {
+    //   return;
+    // }
+    //
+    // initialLiquidityDetected = true;
 
     //We buy x amount of the new token for our wbnb
     const amountIn = ethers.utils.parseUnits(`${data.AMOUNT_OF_WBNB}`, 'ether');
