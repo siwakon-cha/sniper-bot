@@ -3,267 +3,35 @@ import express from 'express';
 import chalk from 'chalk';
 import Web3 from 'web3'
 import * as fs from 'fs';
-import BigNumber from 'big-number';
 
-const ERC20 = [
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "name",
-    "outputs": [
-      {
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_spender",
-        "type": "address"
-      },
-      {
-        "name": "_value",
-        "type": "uint256"
-      }
-    ],
-    "name": "approve",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "totalSupply",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_from",
-        "type": "address"
-      },
-      {
-        "name": "_to",
-        "type": "address"
-      },
-      {
-        "name": "_value",
-        "type": "uint256"
-      }
-    ],
-    "name": "transferFrom",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "decimals",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_owner",
-        "type": "address"
-      }
-    ],
-    "name": "balanceOf",
-    "outputs": [
-      {
-        "name": "balance",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "symbol",
-    "outputs": [
-      {
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_to",
-        "type": "address"
-      },
-      {
-        "name": "_value",
-        "type": "uint256"
-      }
-    ],
-    "name": "transfer",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_owner",
-        "type": "address"
-      },
-      {
-        "name": "_spender",
-        "type": "address"
-      }
-    ],
-    "name": "allowance",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "payable": true,
-    "stateMutability": "payable",
-    "type": "fallback"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Approval",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Transfer",
-    "type": "event"
-  }
-]
+import ERC20 from './ERC20.json'
 
 const app = express();
-
 const { privatekey } = JSON.parse(fs.readFileSync(".secret").toString().trim());
-// one gwei
+
 const ONE_GWEI = 1e9;
-const bscTestnetUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545'
-let web3 = new Web3(new Web3.providers.HttpProvider(bscTestnetUrl));
+const PANCAKE_ROUTER_V2 = '0x10ED43C718714eb63d5aA57B78B54704E256024E' // Mainnet
+const PANCAKE_FACTORY_V2 = '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73' // Mainnet
+const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c' // Mainnet
+
 const data = {
-  WBNB: '0xC9a51cC8C2Ec9bCBFDCce2F3938A13Cc2E4EBfa8', //wbnb
-  to_PURCHASE: '0xA73e995F9a51B0C91BAD64fe775FdAC5FcAa272D',  // token to purchase = BUSD for test
-  factory: '0x4fcEd72290D3337b20F214b2De6dd4974bB75Af2',  //PancakeSwap V2 factory
-  router: '0xcd147E2C00f7262067145CF196d39545aed4015E', //PancakeSwap V2 router
-  recipient: '0x7Fe1f50050934C11FC7ffaF4AcdB6BAf27daBF45', //wallet address,
-  AMOUNT_OF_WBNB : '100',
-  Slippage : '3', //in Percentage
-  gasPrice : '10', //in gwei
+  WBNB: WBNB,
+  to_PURCHASE: '',  // token to purchase
+  factory: PANCAKE_FACTORY_V2,
+  router: PANCAKE_ROUTER_V2,
+  recipient: '0x21e16179F0DA51319816aDf5D4bf05A145fC0d48', //wallet address,
+  AMOUNT_OF_WBNB : '2.5',
+  Slippage : '10', //in Percentage
+  gasPrice : '1000', //in gwei
   gasLimit : '200000' //at least 21000
 }
 
-let initialLiquidityDetected = false;
-console.log('privatekey',privatekey)
-// Connect a wallet to mainnet
-let provider = new ethers.providers.JsonRpcProvider(bscTestnetUrl);
-// let walletWithProvider = new ethers.Wallet(privatekey);
+let bscMainNetUrl = 'https://bsc-dataseed.binance.org/'
+// let bscTestnetUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545'
+let web3 = new Web3(new Web3.providers.HttpProvider(bscMainNetUrl));
+let provider = new ethers.providers.JsonRpcProvider(bscMainNetUrl);
 let wallet = new ethers.Wallet(privatekey);
-const signer = await provider.getSigner()
-const bscMainnetUrl = 'https://bsc-dataseed.binance.org/'
-const mnemonic = '';
-// const wallet = ethers.Wallet.fromMnemonic(mnemonic);
 const account = wallet.connect(provider);
-
-const factory = new ethers.Contract(
-  data.factory,
-  ['function getPair(address tokenA, address tokenB) external view returns (address pair)'],
-  account
-);
 
 const router = new ethers.Contract(
   data.router,
@@ -274,13 +42,12 @@ const router = new ethers.Contract(
   account
 );
 
-async function sniper(){
+const run = async () => {
   const tokenIn = data.WBNB;
   const tokenOut = data.to_PURCHASE;
-  const pairAddress = await factory.getPair(tokenIn, tokenOut);
 
-  const tokenAInput = new web3.eth.Contract(ERC20,data.WBNB);
-  const tokenBPurchase = new web3.eth.Contract(ERC20,data.to_PURCHASE);
+  const tokenAInput = new web3.eth.Contract(ERC20.abi,data.WBNB);
+  const tokenBPurchase = new web3.eth.Contract(ERC20.abi,data.to_PURCHASE);
   const address = await account.getAddress()
   const tokenAResult = await tokenAInput.methods.allowance(address,data.router).call();
   const tokenBResult = await tokenBPurchase.methods.allowance(address,data.router).call();
@@ -321,22 +88,18 @@ async function sniper(){
     console.log('Approved Token B')
   }
 
-  const pair = await new ethers.Contract(pairAddress, ['event Mint(address indexed sender, uint amount0, uint amount1)'], account);
+  const amountInChecked = ethers.utils.parseUnits('1', 'ether');
+  const resultAmount = await router.getAmountsOut(amountInChecked, [tokenIn, tokenOut]);
+  const amountChecked = ethers.utils.formatEther(resultAmount[0].toString())
 
-  pair.on('Mint', async (sender, amount0, amount1) => {
-    // if(initialLiquidityDetected === true) {
-    //   return;
-    // }
-    //
-    // initialLiquidityDetected = true;
-
+  console.log(chalk.yellow(`CGUN Received = ` + amountChecked))
+  if(Number(amountChecked) > 421){
     //We buy x amount of the new token for our wbnb
     const amountIn = ethers.utils.parseUnits(`${data.AMOUNT_OF_WBNB}`, 'ether');
     const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
 
     //Our execution price will be a bit different, we need some flexbility
     const amountOutMin = amounts[1].sub(amounts[1].div(`${data.Slippage}`));
-
     console.log(
       chalk.green.inverse(`Liquidity Addition Detected\n`)
       +
@@ -345,6 +108,8 @@ async function sniper(){
      tokenIn: ${amountIn.toString()} ${tokenIn} (WBNB)
      tokenOut: ${amountOutMin.toString()} ${tokenOut}
    `);
+
+    console.log('amount purchase = ', ethers.utils.formatEther(amountOutMin.toString()))
 
     console.log('Processing Transaction.....');
     console.log(chalk.yellow(`amountIn: ${amountIn}`));
@@ -369,11 +134,7 @@ async function sniper(){
     const receipt = await tx.wait();
     console.log('Transaction receipt');
     console.log(receipt);
-  });
-}
-
-const run = async () => {
-  await sniper()
+  }
 }
 
 run();

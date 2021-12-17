@@ -6,7 +6,8 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "start": "babel-node --presets es2016 bot.js"
+    "start": "babel-node --presets es2016 --experimental-json-modules bot.js",
+    "dev": "node --experimental-json-modules bot.js"
   },
   "type": "module",
   "dependencies": {
