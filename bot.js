@@ -172,63 +172,64 @@ async function checkPair(){
   );
   const tokenIn = data.WBNB;
   const tokenOut = '0x5Cb2C3Ed882E37DA610f9eF5b0FA25514d7bc85B';
+  let pairAddress = ''
   const intervalId = setInterval(async () => {
-    const pairAddress = await factory.getPair('0x5Cb2C3Ed882E37DA610f9eF5b0FA25514d7bc85B', '0xe9e7cea3dedca5984780bafc599bd69add087d56');
+    pairAddress = await factory.getPair('0x5Cb2C3Ed882E37DA610f9eF5b0FA25514d7bc85B', '0xe9e7cea3dedca5984780bafc599bd69add087d56');
     console.log('pairAddress',pairAddress)
+  }, 3000)
 
-    if(pairAddress !== '0x0000000000000000000000000000000000000000'){
-      const pair = await new ethers.Contract(pairAddress, ['event Mint(address indexed sender, uint amount0, uint amount1)'], account);
+  if(pairAddress !== '0x0000000000000000000000000000000000000000'){
+    const pair = await new ethers.Contract(pairAddress, ['event Mint(address indexed sender, uint amount0, uint amount1)'], account);
+    pair.on('Mint', async (sender, amount0, amount1) => {
+      if(initialLiquidityDetected === true) {
+        return;
+      }
 
-      pair.on('Mint', async (sender, amount0, amount1) => {
-        if(initialLiquidityDetected === true) {
-          return;
-        }
+      initialLiquidityDetected = true;
 
-        initialLiquidityDetected = true;
+      //We buy x amount of the new token for our wbnb
+      const amountIn = ethers.utils.parseUnits(`${data.AMOUNT_OF_WBNB}`, 'ether');
+      const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
 
-        //We buy x amount of the new token for our wbnb
-        const amountIn = ethers.utils.parseUnits(`${data.AMOUNT_OF_WBNB}`, 'ether');
-        const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
+      //Our execution price will be a bit different, we need some flexbility
+      const amountOutMin = amounts[1].sub(amounts[1].div(`${data.Slippage}`));
 
-        //Our execution price will be a bit different, we need some flexbility
-        const amountOutMin = amounts[1].sub(amounts[1].div(`${data.Slippage}`));
-
-        console.log(
-          chalk.green.inverse(`Liquidity Addition Detected\n`)
-          +
-          `Buying Token
+      console.log(
+        chalk.green.inverse(`Liquidity Addition Detected\n`)
+        +
+        `Buying Token
      =================
      tokenIn: ${amountIn.toString()} ${tokenIn} (WBNB)
      tokenOut: ${amountOutMin.toString()} ${tokenOut}
    `);
 
-        console.log('Processing Transaction.....');
-        console.log(chalk.yellow(`amountIn: ${amountIn}`));
-        console.log(chalk.yellow(`amountOutMin: ${amountOutMin}`));
-        console.log(chalk.yellow(`tokenIn: ${tokenIn}`));
-        console.log(chalk.yellow(`tokenOut: ${tokenOut}`));
-        console.log(chalk.yellow(`data.recipient: ${data.recipient}`));
-        console.log(chalk.yellow(`data.gasLimit: ${data.gasLimit}`));
-        console.log(chalk.yellow(`data.gasPrice: ${ethers.utils.parseUnits(`${data.gasPrice}`, 'gwei')}`));
+      console.log('Processing Transaction.....');
+      console.log(chalk.yellow(`amountIn: ${amountIn}`));
+      console.log(chalk.yellow(`amountOutMin: ${amountOutMin}`));
+      console.log(chalk.yellow(`tokenIn: ${tokenIn}`));
+      console.log(chalk.yellow(`tokenOut: ${tokenOut}`));
+      console.log(chalk.yellow(`data.recipient: ${data.recipient}`));
+      console.log(chalk.yellow(`data.gasLimit: ${data.gasLimit}`));
+      console.log(chalk.yellow(`data.gasPrice: ${ethers.utils.parseUnits(`${data.gasPrice}`, 'gwei')}`));
 
-        const tx = await router.swapExactTokensForTokens(
-          amountIn,
-          amountOutMin,
-          [tokenIn, tokenOut],
-          data.recipient,
-          Date.now() + 1000 * 60 * 10, //10 minutes
-          {
-            'gasLimit': data.gasLimit,
-            'gasPrice': ethers.utils.parseUnits(`${data.gasPrice}`, 'gwei')
-          });
+      const tx = await router.swapExactTokensForTokens(
+        amountIn,
+        amountOutMin,
+        [tokenIn, tokenOut],
+        data.recipient,
+        Date.now() + 1000 * 60 * 10, //10 minutes
+        {
+          'gasLimit': data.gasLimit,
+          'gasPrice': ethers.utils.parseUnits(`${data.gasPrice}`, 'gwei')
+        });
 
-        const receipt = await tx.wait();
-        console.log('Transaction receipt');
-        console.log(receipt);
-      });
-    }
-
-  }, 3000)
+      const receipt = await tx.wait();
+      console.log('Transaction receipt');
+      console.log(receipt);
+    });
+  } else {
+    console.log('no pair')
+  }
 
   // clearInterval(intervalId)
   // const pair = await new ethers.Contract(pairAddress, ['event Mint(address indexed sender, uint amount0, uint amount1)'], account);
