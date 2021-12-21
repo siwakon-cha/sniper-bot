@@ -23,7 +23,7 @@ const data = {
   recipient: '0x21e16179F0DA51319816aDf5D4bf05A145fC0d48', //wallet address,
   AMOUNT_OF_WBNB : '260',
   Slippage : '10', //in Percentage
-  gasPrice : '1000', //in gwei
+  gasPrice : '300', //in gwei
   gasLimit : '1200000' //at least 21000
 }
 
